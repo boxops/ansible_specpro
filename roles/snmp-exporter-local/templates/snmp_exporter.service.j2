@@ -1,0 +1,24 @@
+[Unit]
+Description=Prometheus SNMP Exporter
+Wants=network-online.target
+After=network-online.target
+StartLimitInterval=0
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart={{ snmp_exporter_binary_directory }}/snmp_exporter \
+  --web.listen-address={{ snmp_exporter_web_listen_address }} \
+  --log.level={{ snmp_exporter_log_level }} \
+  --config.file={{ snmp_exporter_configuration_directory }}/snmp_exporter/snmp.yml
+
+KillMode=process
+
+SyslogIdentifier=snmp_exporter
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

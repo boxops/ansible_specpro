@@ -1,0 +1,46 @@
+---
+# Define prometheus node-exporter tasks here
+
+- name: Add execute permission to snmp_exporter binary
+  file:
+    path: "{{ snmp_exporter_binary_directory }}/snmp_exporter"
+    mode: a+x
+
+- name: Copy the SNMP Exporter systemd service file
+  template:
+    src: snmp_exporter.service.j2
+    dest: /etc/systemd/system/snmp_exporter.service
+    owner: prometheus
+    group: prometheus
+    mode: 0644
+  notify:
+    - restart snmp exporter
+    - enable snmp exporter
+
+- name: Download snmp configuration file from github repository
+  get_url:
+    url: "https://raw.githubusercontent.com/prometheus/snmp_exporter/v{{ snmp_exporter_version }}/snmp.yml"
+    dest: "{{ snmp_exporter_configuration_directory }}/snmp_exporter/snmp.yml"
+    validate_certs: false
+    owner: prometheus
+    group: prometheus
+    mode: 0644
+  register: _download_config
+  until: _download_config is success
+  retries: 5
+  delay: 2
+  notify:
+    - reload snmp exporter
+  when: snmp_exporter_config_file == ""
+
+- name: Copy configuration file
+  template:
+    src: "{{ snmp_exporter_config_file }}"
+    dest: "{{ snmp_exporter_configuration_directory }}/snmp_exporter/snmp.yml"
+    owner: prometheus
+    group: prometheus
+    mode: 0644
+  no_log: "{{ 'true' if __testing_on_travis is defined else 'false' }}"
+  notify:
+    - reload snmp exporter
+  when: snmp_exporter_config_file != ""

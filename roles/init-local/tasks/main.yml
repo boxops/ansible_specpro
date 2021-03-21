@@ -1,0 +1,192 @@
+---
+# Initial configuration to run on the node
+
+- name: Configure hostname
+  hostname:
+    name: "{{ node_hostname }}"
+
+- name: Set timezone
+  command: "timedatectl set-timezone {{ time_zone }}"
+  changed_when: false
+
+# - name: Change root password
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html
+# TODO
+
+- name: Add mappings to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ item.ip }} {{ item.entry1 }} {{ item.entry2 }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.entry1 }}"
+  with_items: "{{ hosts_file }}"
+
+# Configure network interfaces
+# Install requisities: ansible-galaxy collection install community.general
+- name: Install Network manager dependency for nmcli ansible module
+  apt:
+    state: present
+    name: network-manager
+
+- name: Configure static network interfaces with nmcli
+  community.general.nmcli:
+    conn_name: "{{ item.conn_name }}"
+    ifname: "{{ item.ifname }}"
+    type: "{{ item.type }}"
+    state: "{{ item.state }}"
+    autoconnect: "{{ item.autoconnect }}"
+    ip4: "{{ item.ip4 }}"
+    gw4: "{{ item.gw4 }}"
+  with_items: "{{ network }}"
+  when: item.ip4 is defined
+
+- name: Configure dynamic network interfaces with nmcli
+  community.general.nmcli:
+    conn_name: "{{ item.conn_name }}"
+    ifname: "{{ item.ifname }}"
+    type: "{{ item.type }}"
+    state: "{{ item.state }}"
+    autoconnect: "{{ item.autoconnect }}"
+  with_items: "{{ network }}"
+  when: item.ip4 is not defined
+
+# - name: Upgrade system
+#   apt:
+#     upgrade: dist
+
+- name: Create sudo users
+  user:
+    name: "{{ item }}"
+    shell: /bin/bash
+    group: sudo
+    # password: "{{ item.password }}"
+    append: true
+    create_home: true
+    state: present
+  with_items: "{{ sudo_users }}"
+
+- name: Create sudoers file for sudo users
+  file:
+    path: "/etc/sudoers.d/{{ item }}"
+    owner: root
+    group: root
+    state: touch
+    mode: '0440'
+  with_items: "{{ sudo_users }}"
+  changed_when: false
+
+- name: Add rights for sudo users
+  lineinfile:
+    dest: "/etc/sudoers.d/{{ item }}"
+    regexp: "^{{ item }}"
+    line: "{{ item }} ALL=(ALL) NOPASSWD: ALL"
+    state: present
+    validate: "visudo -cf %s"
+  with_items: "{{ sudo_users }}"
+
+# Setup Bash Aliases
+- name: Add an environment variable to sudoers shell
+  blockinfile:
+    path: "/home/{{ item }}/.bashrc"
+    block: "{{ bashrc_block }}"
+  with_items: "{{ sudo_users }}"
+  changed_when: false
+
+- name: Copy packages from local package bundle folder to system
+# TODO - move this task to individual roles for offline configuration
+# https://docs.ansible.com/ansible/latest/collections/ansible/posix/synchronize_module.html
+  synchronize:
+    src: "{{ local_package_bundle_directory }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "yes"
+    # Comment: Added '.rsync-filter' file to 'code' folder
+    # Exclude copying: '/usr/local/etc/prometheus/tsdb'
+    rsync_opts:
+      - "--exclude=tsdb"
+  with_items:
+    - { src: 'etc/', dest: '/usr/local/etc/' }
+    - { src: 'bin/', dest: '/usr/local/bin/' }
+    - { src: 'system/', dest: '/etc/systemd/system/' }
+    - { src: 'rsyslog.conf', dest: '/etc/rsyslog.conf' }
+    - { src: '50-telegraf.conf', dest: '/etc/rsyslog.d/' }
+
+- name: Copy management scripts from local package bundle folder
+  copy:
+    src: "{{ local_package_bundle_directory }}/scripts/"
+    dest: "/home/{{ item }}/"
+  with_items: "{{ sudo_users }}"
+
+# Use secure and encrypted communication.
+- name: Allow sshd to listen on a custom tcp port
+  seport:
+    ports: "{{ ssh_port }}"
+    proto: tcp
+    setype: ssh_port_t
+    state: present
+  when: ansible_selinux.status == 'enabled'
+
+# Disable root login and use `sudo`.
+- name: Update SSH configuration to be more secure.
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: 'sshd -t -f %s'
+  with_items:
+    - regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication {{ ssh_password_authentication }}"
+    - regexp: "^PermitRootLogin"
+      line: "PermitRootLogin {{ ssh_permit_root_login }}"
+    - regexp: "^Port"
+      line: "Port {{ ssh_port }}"
+  notify: restart ssh
+
+# # Restrict file permissions
+# - name: Configure the permissions for the messages log.
+#   file:
+#     path: /var/log/messages
+#     owner: root
+#     group: root
+#     state: touch
+#     mode: 0600
+#   changed_when: false
+
+# # Automating updates for Debian systems.
+# - name: Install unattended upgrades package.
+#   apt:
+#     name: unattended-upgrades
+#     state: present
+#   when: ansible_os_family == 'Debian'
+
+# Simple iptables firewall for Debian-based systems
+# https://galaxy.ansible.com/geerlingguy/firewall
+
+# Monitor logins and block suspect IP addresses.
+- name: Install fail2ban (Debian).
+  apt:
+    name: fail2ban
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Ensure fail2ban is running and enabled on boot.
+  service:
+    name: fail2ban
+    state: started
+    enabled: yes
+
+# # TODO - Use SELinux (Security-Enhanced Linux).
+# - name: Install Python SELinux library.
+#   apt:
+#     name: python3-selinux
+#     state: present
+# - name: Ensure SELinux is enabled in `targeted` mode.
+#   selinux:
+#     policy: targeted
+#     state: enforcing
+# - name: Ensure httpd can connect to the network.
+#   seboolean:
+#     name: httpd_can_network_connect
+#     state: yes
+#     persistent: yes
+#   when: ansible_selinux.status == 'enabled'

@@ -1,0 +1,34 @@
+---
+# Copies local ssh public key to remote known hosts file, requires manual interaction
+
+# https://www.codesandnotes.be/2020/01/13/generate-ssh-keys-using-ansible/
+# https://gist.github.com/fulv/3928d098e8c35af1cc5363a4d2d4fcd0
+- name: Create ssh keys for users
+  user:
+    name: "{{ item.name }}"
+    generate_ssh_key: yes
+    ssh_key_type: rsa
+    ssh_key_bits: 4096
+    ssh_key_file: "/home/{{ item.name }}/.ssh/{{ item.name }}_id_rsa"
+    # ssh_key_passphrase: "{{ ssh_passphrase }}"
+    force: no
+  with_items: "{{ users }}"
+
+# TODO - only use in ansible-push mode
+- name: Deploy SSH keys
+  authorized_key:
+    user: "{{ item.name }}"
+    state: present
+    key: "lookup('file', '/home/{{ item.name }}/.ssh/id_rsa.pub')"
+  with_items: "{{ users }}"
+
+# # TODO
+# - name: Copy rsa cloud server key to local node
+#   copy:
+#     src: "{{ ansible_ssh_private_key_file }}"
+#     dest: "/home/{{ item.name }}/.ssh/id_rsa"
+#     owner: "{{ item.name }}"
+#     group: "{{ item.name }}"
+#     mode: 0600
+#   with_items: "{{ users }}"
+#   when: item.group == 'sudo'

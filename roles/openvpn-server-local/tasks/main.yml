@@ -1,0 +1,11 @@
+---
+# Generate openvpn client keys
+# Source: https://github.com/kyl191/ansible-role-openvpn
+
+- name: Generate clients when client list is not empty
+  include: generate.yml
+  when: (openvpn_clients is defined) and (openvpn_clients | length > 0 | default([]))
+
+- name: Revoke clients and their keys when revoke list is not empty
+  include: revoke.yml
+  when: (openvpn_revoke_certs is defined) and (openvpn_revoke_certs | length > 0 | default([]))

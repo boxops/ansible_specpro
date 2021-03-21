@@ -1,0 +1,264 @@
+---
+# Configured for Ansible-local
+# Ensure to install Ansible playbook dependencies on the control node externally:
+# ansible-galaxy install kwoodson.yedit
+# ansible-galaxy collection install community.general
+
+# Guides - https://github.com/cloudalchemy
+
+# - hosts: all
+#   become: yes
+#   debugger: on_failed
+
+#   vars_files:
+#     - vars/grafana_vars.yml
+#     - vars/prometheus_vars.yml
+
+#   pre_tasks:
+#     - name: Update apt cache if needed
+#       apt:
+#         update_cache: true
+#         cache_valid_time: 3600
+
+#   handlers:
+#     - name: restart service
+#       service:
+#         name: influxdb.service
+#         state: restarted
+#       notify: restart memcached
+
+#     - name: restart memcached
+#       service:
+#         name: memcached
+#         state: restarted
+
+    # # Import handlers from other .yml files
+    # - import_tasks: handlers/apache.yml
+
+  # roles:
+  # Create and include own roles in main.yml file!
+    # - kwoodson.yedit
+
+  # tasks:
+
+    # # Import static tasks from other .yml files
+    # - import_tasks: tasks/prometheus_tasks.yml
+
+    # # Include dynamic tasks from other .yml files
+    # - include_tasks: prerequisites_{{ ansible_os_family | lower }}.yml
+
+    # Import playbooks
+    # - import_playbook: playbooks/app.yml
+
+    ## Registering and debugging playbooks
+    # - name: Register the output of a command
+    #   command: uptime
+    #   changed_when: false
+    #   register: system_uptime
+
+    # - name: Print the registered output of the command
+    #   debug:
+    #     var: system_uptime.stdout
+
+    # - name: Print a message if a command resulted in a change
+    #   debug:
+    #     msg: "Command resulted in a change!"
+    #   when: system_uptime is changed
+
+    # Install yamllint for testing Ansible playbooks
+    # pip3 install yamllint
+
+    # Install molecule for testing Ansible playbooks
+    # pip3 install molecule
+
+# - name: Copy from 'code' folder
+# # https://docs.ansible.com/ansible/latest/collections/ansible/posix/synchronize_module.html
+#   synchronize:
+#     src: "/home/vagrant/code/{{ item.src }}"
+#     dest: "{{ item.dest }}"
+#     owner: yes
+#     # TODO - Added '.rsync-filter' file to 'code' folder
+#     # Exclude copying: '/usr/local/etc/prometheus/tsdb'
+#     rsync_opts:
+#      - "--exclude=tsdb"
+#   with_items:
+#     - { src: 'etc/', dest: '/usr/local/etc/' }
+#     - { src: 'bin/', dest: '/usr/local/bin/' }
+#     - { src: 'system/', dest: '/etc/systemd/system/' }
+#     - { src: 'rsyslog.conf', dest: '/etc/rsyslog.conf' }
+#     - { src: '50-telegraf.conf', dest: '/etc/rsyslog.d/' }
+#     - { src: 'scripts/', dest: '/home/vagrant/' }
+
+#     ### Configure grafana
+#     ### Comments: Tested and works
+#     - name: Configure '/usr/local/etc/grafana/conf/grafana.ini' file
+#       # https://github.com/cloudalchemy/ansible-grafana
+#       template:
+#         src: templates/grafana.ini.j2
+#         dest: /usr/local/etc/grafana/conf/grafana.ini
+#         owner: grafana
+#         group: grafana
+#         mode: '0644'
+
+#     ### TODO - Review this guide and rework influxdb deployment
+#     ### https://www.influxdata.com/blog/deploying-influxdb-with-ansible/
+#     ### Configure influxdb
+#     ### Comments: TODO
+#     - name: Configure '/usr/local/etc/influxdb/influxdb.service' file
+#       # TODO - Template not configured yet, ask Magic about the configuration
+#       template:
+#         src: templates/influxdb.service.j2
+#         dest: /usr/local/etc/influxdb/influxdb.service
+#         owner: influxdb
+#         group: influxdb
+#         mode: '0644'
+#     - name: Configure '/etc/telegraf/telegraf.conf' file for rsyslog
+#       community.general.ini_file:
+#         path: /etc/telegraf/telegraf.conf
+#         section: "{{ item.section }}"
+#         option: "{{ item.option }}"
+#         value: "{{ item.value }}"
+#         backup: true
+#       with_items:
+#         - {section: '[outputs.influxdb]',
+#            option: '  urls',
+#            value: '["http://127.0.0.1:8086"]'}
+#         - {section: '[outputs.influxdb]',
+#            option: '  database',
+#            value: '"telegraf"'}
+#         - {section: '[outputs.influxdb]',
+#            option: '  username',
+#            value: '"telegrafuser"'}
+#         - {section: '[outputs.influxdb]',
+#            option: '  password',
+#            value: '"C1sco123"'}
+#         - {section: '[inputs.syslog]',
+#            option: '  server',
+#            value: '"tcp://localhost:6514"'}
+#     - name: Restart telegraf.service
+#       systemd:
+#         name: telegraf.service
+#         state: restarted
+
+# # TODO - Configure OpenVPN on both Server and Client, (work in progress)
+# # https://github.com/robertdebock/ansible-role-openvpn
+# - hosts: vpn_server
+#   become: true
+#   gather_facts: true
+#   tasks:
+
+#   post_tasks:
+#     - name: Notify Slack about the changes
+#   https://docs.ansible.com/ansible/latest/collections/community/general/slack_module.html
+#       if_successful: "New node: {{ ansible_hostname }}" reporting for duty!"
+
+# Define prometheus tasks here
+
+# - name: Install prerequisities for prometheus
+#   apt:
+#     update_cache: true
+#     state: present
+#     name: nginx
+#   register: apt_action
+#   retries: 100
+#   until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
+
+# - name: Start nginx service
+#   systemd:
+#     name: nginx
+#     state: started
+
+---
+# Define prometheus tasks here
+# https://github.com/cloudalchemy/ansible-prometheus
+
+# - name: Install prerequisities for prometheus
+#   apt:
+#     update_cache: true
+#     state: present
+#     name: nginx
+#   register: apt_action
+#   retries: 100
+#   until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
+
+# - name: Start nginx service
+#   systemd:
+#     name: nginx
+#     state: started
+
+- name: Create prometheus system group
+  group:
+    name: prometheus
+    system: true
+    state: present
+
+- name: Create prometheus system user
+  user:
+    name: prometheus
+    system: true
+    shell: "/usr/sbin/nologin"
+    group: prometheus
+    createhome: false
+    home: "{{ prometheus_db_dir }}"
+
+# - name: Download and unarchive a stable version of prometheus
+#   unarchive:
+#     src: https://github.com/prometheus/prometheus/releases/download/v2.0.0/prometheus-2.0.0.linux-amd64.tar.gz
+#     dest: /usr/local/etc/prometheus
+#     remote_src: true
+
+- name: Propagate 'prometheus' and 'promtool' binary files
+  copy:
+    src: "/usr/local/etc/prometheus/{{ item }}"
+    dest: /usr/local/bin/
+  with_items:
+    - prometheus
+    - promtool
+
+- name: Create prometheus data directory
+  file:
+    path: "{{ prometheus_db_dir }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0755
+
+- name: Change the ownership of the copied files
+  file:
+    path: "{{ item }}"
+    owner: prometheus
+    group: prometheus
+  with_items:
+    - '/usr/local/bin/prometheus'
+    - '/usr/local/bin/promtool'
+    - '/usr/local/etc/prometheus'
+    - '/var/lib/prometheus'
+
+- name: Add execute permissions to prometheus binaries
+  file:
+    path: "/usr/local/bin/{{ item }}"
+    mode: a+x
+  with_items:
+    - 'promtool'
+    - 'prometheus'
+
+- name: Configure '/etc/systemd/system/prometheus.service' file
+  template:
+    src: templates/prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+
+- name: Configure '/usr/local/etc/prometheus/prometheus.yml' file
+  template:
+    src: templates/prometheus.yml.j2
+    dest: /usr/local/etc/prometheus/prometheus.yml
+    force: true
+    owner: root
+    group: prometheus
+    mode: 0640
+    validate: "{{ prometheus_binary_install_dir }}/promtool check config %s"
+  notify:
+    - reload prometheus
+
+# Ensure to configure OpenVPN before starting the prometheus service!
+
+# Ensure to configure OpenVPN before starting the prometheus service!

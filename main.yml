@@ -1,0 +1,74 @@
+---
+# Ansible playbook for Raspberry Pi nodes
+
+# - hosts: server
+#   become: true
+#   vars_files:
+#     - vars/init_local_vars.yml
+#     - vars/openvpn_vars.yml
+#   roles:
+#     - roles/openvpn-server-local
+
+- hosts: node
+  become: true
+  # gather_facts: true
+
+  pre_tasks:
+    - name: Update apt cache if needed
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      register: apt_action
+      retries: 100
+      until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
+      # when: network_connectivity is true
+
+    # - tasks/ssh-key-exchange.yml
+    # - tasks/snmp-exporter-config-generator.yml
+    # - tasks/securing-servers.yml
+
+  vars_files:
+    - vars/init_local_vars.yml
+    - vars/prometheus_vars.yml
+    - vars/snmp_exporter_vars.yml
+    - vars/node_exporter_vars.yml
+    - vars/blackbox_exporter_vars.yml
+    - vars/grafana_vars.yml
+    - vars/certbot_vars.yml
+    - vars/openvpn_vars.yml
+
+  handlers:
+    # - include: handlers/main.yml
+
+  # ansible-galaxy install <galaxy-user.role-name>
+  roles:
+    - roles/init-local
+    - roles/openvpn-client-local
+    - roles/prometheus-local
+    - roles/snmp-exporter-local
+    - roles/node-exporter-local
+    - roles/blackbox-exporter-local
+    - roles/grafana-local
+
+    # - cloudalchemy.prometheus
+    # - cloudalchemy.snmp-exporter
+    # - cloudalchemy.node_exporter
+    # - cloudalchemy.grafana
+    # - cloudalchemy.blackbox-exporter
+
+    # - manala.influxdb  # TODO - No such file or directory: b'[/usr/bin/influx]'
+    # - manala.telegraf  # TODO - "msg": "No package matching 'telegraf' is available"
+
+  tasks:
+
+    # Use Kickstart to setup a Linux client:
+    # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/identity_management_guide/kickstart
+    # https://help.ubuntu.com/lts/installation-guide/powerpc/ch04s05.html
+    # https://help.ubuntu.com/community/KickstartCompatibility
+
+    # Create users based on GitHub accounts and add all the pubkeys associated with the GitHub account
+    # https://galaxy.ansible.com/geerlingguy/github-users
+
+    # Install and configure certbot
+    # ansible-galaxy install geerlingguy.certbot
+

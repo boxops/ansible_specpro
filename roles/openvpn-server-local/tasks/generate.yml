@@ -1,0 +1,87 @@
+---
+# Generate openvpn client keys
+
+- name: create revoke.sh
+  template:
+    src: revoke.sh.j2
+    dest: "{{ openvpn_config_directory }}/revoke.sh"
+
+# - name: check if client keys exist
+#   stat:
+#     path: "{{ openvpn_config_directory }}/easy-rsa/pki/private/{{ item }}.key"
+#   register: client_key_file
+#   with_items: "{{ openvpn_clients }}"
+
+- name: generate full client keys
+  command: bash easyrsa build-client-full "{{ item }}" nopass
+  args:
+    chdir: "{{ openvpn_config_directory }}/easy-rsa"
+  # when: not client_key_file.stat.exists
+  with_items: "{{ openvpn_clients }}"
+
+- name: check if client cert only files exist
+  stat:
+    path: "{{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ item }}-crt-only.crt"
+  with_items: "{{ openvpn_clients }}"
+  # register: client_cert_only
+
+- name: create client cert only file
+  file:
+    path: "{{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ item }}-crt-only.crt"
+    owner: root
+    group: root
+    mode: 0600
+    state: touch
+  with_items: "{{ openvpn_clients }}"
+  # when: not client_cert_only.stat.exists
+
+- name: copy client cert content to cert only file
+  shell: "awk '/BEGIN/,/END/' {{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ item }}.crt > {{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ item }}-crt-only.crt"
+  with_items: "{{ openvpn_clients }}"
+  # when: client_cert_only.stat.exists
+
+- name: register client certs
+  slurp:
+    src: "{{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ item }}-crt-only.crt"
+  with_items: "{{ openvpn_clients }}"
+  register: client_certs
+
+- name: register client keys
+  slurp:
+    src: "{{ openvpn_config_directory }}/easy-rsa/pki/private/{{ item }}.key"
+  with_items: "{{ openvpn_clients }}"
+  register: client_keys
+
+- name: protect client keys
+  file:
+    path: "{{ openvpn_config_directory }}/easy-rsa/pki/private/{{ item }}.key"
+    mode: 0400
+  with_items: "{{ openvpn_clients }}"
+
+- name: register server ca key
+  slurp:
+    src: "{{ openvpn_config_directory }}/easy-rsa/pki/ca.crt"
+  register: ca_cert
+
+- name: register tls-crypt key
+  slurp:
+    src: "{{ openvpn_config_directory }}/tls-crypt.key"
+  register: tls_crypt
+
+- name: generate client config
+  template:
+    src: client.ovpn.j2
+    dest: "{{ openvpn_ovpn_directory }}/{{ item.0.item }}.ovpn"
+    owner: root
+    group: root
+    mode: 0400
+  with_together:
+    - "{{ client_certs.results }}"
+    - "{{ client_keys.results }}"
+
+- name: fetch client config to local machine
+  fetch:
+    src: "{{ openvpn_ovpn_directory }}/{{ item }}.ovpn"
+    dest: "{{ openvpn_fetch_config_directory }}/{{ inventory_hostname }}/{{ item }}.ovpn"
+    flat: true
+  with_items: "{{ openvpn_clients }}"

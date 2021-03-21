@@ -1,0 +1,30 @@
+---
+- include: preflight.yml
+
+- name: create systemd service unit
+  template:
+    src: blackbox_exporter.service.j2
+    dest: "{{ blackbox_exporter_service_file_directory }}/blackbox-exporter.service"
+    owner: prometheus
+    group: prometheus
+    mode: 0644
+  notify:
+    - restart blackbox exporter
+
+- name: configure blackbox exporter
+  template:
+    src: blackbox_exporter.yml.j2
+    dest: "{{ blackbox_exporter_config_directory }}/blackbox.yml"
+    owner: prometheus
+    group: prometheus
+    mode: 0644
+  notify:
+    - reload blackbox exporter
+
+- name: ensure blackbox_exporter service is started and enabled
+  become: true
+  systemd:
+    daemon_reload: true
+    name: blackbox-exporter
+    state: started
+    enabled: true

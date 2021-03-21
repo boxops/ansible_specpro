@@ -1,0 +1,18 @@
+---
+- name: reload snmp exporter
+  systemd:
+    daemon_reload: true
+    name: snmp_exporter
+    state: reloaded
+
+- name: restart snmp exporter
+  systemd:
+    daemon_reload: true
+    name: snmp_exporter
+    state: restarted
+
+- name: enable snmp exporter
+  systemd:
+    daemon_reload: true
+    name: snmp_exporter
+    enabled: true
