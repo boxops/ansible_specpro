@@ -79,7 +79,7 @@ grafana_security:
 
 # Set this for mail notifications
 grafana_smtp:
-  host: ssl0.ovh.net:456
+  host: host.net:456
   user: admin@example.co.uk
   password: secretpass
   skip_verify: true
