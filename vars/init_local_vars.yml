@@ -1,6 +1,6 @@
 ---
 # Initial configuration for nodes
-node_hostname: SpecHomeNode
+node_hostname: mynode
 
 time_zone: Europe/London
 
@@ -31,9 +31,9 @@ network:
   #     gw4: "192.168.1.254" }
 
 sudo_users:
-  - maciej
-  - balazs
-  - specadmin
+  - jack
+  - jane
+  - admin
 
 local_package_bundle_directory: "~/vagrant/code"
 
@@ -45,10 +45,10 @@ ssh_permit_root_login: "no"
 ssh_port: 22  # change default port to enhance security
 
 bashrc_block: |
-  alias chk=python3 /usr/local/bin/checksrv.py
+  alias chk="python3 /usr/local/bin/checksrv.py"
   unset HISTFILESIZE
   #HISTFILESIZE=2000
   HISTSIZE=4000
-  PROMPT_COMMAND=history -a
+  PROMPT_COMMAND="history -a"
   export HISTSIZE PROMPT_COMMAND
   shopt -s histappend
