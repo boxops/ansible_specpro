@@ -4,6 +4,8 @@ This is a configuration management program created for a portable network monito
 
 ### Notes
 
+---[ Work in progress... ]---
+
 Ensure to customise variables in ```vars/``` before usage.
 
 ### Usage
