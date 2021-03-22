@@ -118,7 +118,6 @@ prometheus_scrape_configs:
       - targets:
         - http://prometheus.io    # Target to probe with http.
         - https://prometheus.io   # Target to probe with https.
-        - http://fypbcu.co.uk:8080 # Target to probe with http on port 8080.
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -153,7 +152,6 @@ prometheus_scrape_configs:
       - targets:
 #        - http://prometheus.io    # Target to probe with http.
 #        - https://prometheus.io   # Target to probe with https.
-        - http://specmon.co.uk # Target to probe with http on port 8080.
         - http://youtube.com:80
     relabel_configs:
       - source_labels: [__address__]
@@ -170,8 +168,7 @@ prometheus_scrape_configs:
          - icmp
     static_configs:
       - targets:
-        - 54.36.163.113
-        - 82.153.171.48
+        - 10.10.10.10
 #        - http://youtube.com:8080
     relabel_configs:
       - source_labels: [__address__]
