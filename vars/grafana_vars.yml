@@ -21,7 +21,7 @@ grafana_instance: "{{ inventory_hostname }}"
 grafana_logs_dir: "/var/log/grafana"
 grafana_data_dir: "/var/lib/grafana"
 
-grafana_fqdn: "fypbcu.co.uk"
+grafana_fqdn: "example.co.uk"
 grafana_address: "127.0.0.1"
 grafana_port: 9010
 # To enable the use of ports below 1024 for unprivileged processes linux needs to set CAP_NET_BIND_SERVICE.
@@ -46,7 +46,7 @@ grafana_ini:
       value: true}
   - { section: smtp,
       option: user,
-      value: admin@fypbcu.co.uk}
+      value: admin@example.co.uk}
 
 # Additional options for grafana "server" section
 # This section WILL omit options for: http_addr, http_port, domain, and root_url, as those settings are set by variables listed before
@@ -80,12 +80,12 @@ grafana_security:
 # Set this for mail notifications
 grafana_smtp:
   host: ssl0.ovh.net:456
-  user: admin@fypbcu.co.uk
-  password: Spectrum1000
+  user: admin@example.co.uk
+  password: secretpass
   skip_verify: true
-  from_address: admin@fypbcu.co.uk
+  from_address: admin@example.co.uk
   from_name: FYP_Project
-  ehlo_identity: admin@fypbcu.co.uk
+  ehlo_identity: admin@example.co.uk
 
 # User management and registration
 grafana_welcome_email_on_sign_up: true
