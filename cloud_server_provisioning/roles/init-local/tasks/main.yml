@@ -1,0 +1,306 @@
+---
+# Initial configuration to run on the server
+
+- name: configure hostname
+  hostname:
+    name: "{{ server_hostname }}"
+
+- name: make the hostname persistent
+  lineinfile:
+    dest: /etc/cloud/cloud.cfg
+    regexp: "^{{ item }}"
+    line: "{{ item }}"
+    state: present
+  with_items: "{{ server_hostname_persistent }}"
+
+- name: set timezone
+  command: "timedatectl set-timezone {{ time_zone }}"
+  changed_when: false
+
+# - name: Change root password
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html
+# TODO
+
+# TODO - apply correct indentation
+- name: add mappings to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ item.ip }} {{ item.name1 }} {{ item.name2 }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name1 }}"
+  with_items: "{{ hosts_file }}"
+
+# Configure network interfaces
+# Install requisities: ansible-galaxy collection install community.general
+- name: install Network manager dependency for nmcli ansible module
+  apt:
+    state: present
+    name: network-manager
+
+- name: configure static network interfaces with nmcli
+  community.general.nmcli:
+    conn_name: "{{ item.conn_name }}"
+    ifname: "{{ item.ifname }}"
+    type: "{{ item.type }}"
+    state: "{{ item.state }}"
+    autoconnect: "{{ item.autoconnect }}"
+    ip4: "{{ item.ip4 }}"
+    gw4: "{{ item.gw4 }}"
+  with_items: "{{ network_config }}"
+  when:
+    - network_config | length > 0
+    - item.ip4 is defined
+
+- name: configure dynamic network interfaces with nmcli
+  community.general.nmcli:
+    conn_name: "{{ item.conn_name }}"
+    ifname: "{{ item.ifname }}"
+    type: "{{ item.type }}"
+    state: "{{ item.state }}"
+    autoconnect: "{{ item.autoconnect }}"
+  with_items: "{{ network_config }}"
+  when:
+    - network_config | length > 0
+    - item.ip4 is not defined
+
+# - name: Upgrade system
+#   apt:
+#     upgrade: dist
+
+- name: create sudo users
+  user:
+    name: "{{ item }}"
+    shell: /bin/bash
+    group: sudo
+    append: true
+    create_home: true
+    state: present
+  with_items: "{{ sudo_users }}"
+
+- name: create sudoers file for sudo users
+  file:
+    path: "/etc/sudoers.d/{{ item }}"
+    owner: root
+    group: root
+    state: touch
+    mode: '0440'
+  with_items: "{{ sudo_users }}"
+  changed_when: false
+
+- name: add rights for sudo users
+  lineinfile:
+    dest: "/etc/sudoers.d/{{ item }}"
+    regexp: "^{{ item }}"
+    line: "{{ item }} ALL=(ALL) NOPASSWD: ALL"
+    state: present
+    validate: "visudo -cf %s"
+  with_items: "{{ sudo_users }}"
+
+- name: create system groups
+  group:
+    name: "{{ item }}"
+    system: true
+    state: present
+  with_items: "{{ system_users }}"
+
+- name: create system users
+  user:
+    name: "{{ item }}"
+    group: "{{ item }}"
+    system: true
+    shell: "/usr/sbin/nologin"
+    createhome: false
+  with_items: "{{ system_users }}"
+
+# ---[ subdomain.redirect setup ]---
+
+- name: install packages for domain setup
+  apt:
+    state: present
+    name:
+      - nginx
+      - certbot
+      - python3-certbot-nginx
+
+# TODO - apply identation correctly
+- name: apply config to nginx that prevents buffer errors
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    regexp: "server_names_hash_bucket_size"
+    insertafter: "# server_names_hash_bucket_size"
+    line: "        server_names_hash_bucket_size 64;"
+    # validate: "nginx -t -c %s"
+
+# Create the main nginx domain
+- name: ensure that the main domain exists
+  stat:
+    path: "/etc/nginx/sites-available/{{ nginx_main_domain_name }}"
+  register: main_nginx_domain
+
+- block:
+
+    - name: create main nginx domain file
+      file:
+        path: "/etc/nginx/sites-available/{{ nginx_main_domain_name }}"
+        owner: root
+        group: root
+        mode: 0750
+        state: touch
+
+    - name: add the main server block for nginx
+      blockinfile:
+        path: "/etc/nginx/sites-available/{{ nginx_main_domain_name }}"
+        block: "{{ nginx_main_domain_server_block }}"
+      changed_when: false
+
+    - name: create a main symbolic link to the sites-enabled folder
+      file:
+        src: "/etc/nginx/sites-available/{{ nginx_main_domain_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ nginx_main_domain_name }}"
+        owner: root
+        group: root
+        state: link
+        # validate: "nginx -t -c %s"
+
+  when: not main_nginx_domain.stat.exists
+
+# # Create the sub nginx domain
+# - name: ensure that the subdomain exists
+#   stat:
+#     path: "/etc/nginx/sites-available/{{ nginx_sub_domain_name }}"
+#   register: sub_nginx_domain
+
+# - block:
+
+#     - name: create sub nginx domain file
+#       file:
+#         path: "/etc/nginx/sites-available/{{ nginx_sub_domain_name }}"
+#         owner: root
+#         group: root
+#         mode: 0750
+#         state: touch
+
+#     - name: add the sub server block for nginx
+#       blockinfile:
+#         path: "/etc/nginx/sites-available/{{ nginx_sub_domain_name }}"
+#         block: "{{ nginx_sub_domain_server_block }}"
+#       changed_when: false
+
+#     - name: create a sub symbolic link to the sites-enabled folder
+#       file:
+#         src: "/etc/nginx/sites-available/{{ nginx_sub_domain_name }}"
+#         dest: "/etc/nginx/sites-enabled/{{ nginx_sub_domain_name }}"
+#         owner: root
+#         group: root
+#         state: link
+#         # validate: "nginx -t -c %s"
+
+#   when: not sub_nginx_domain.stat.exists
+
+# Issue certificates to nginx domains using certbot
+- name: install certbot
+  apt:
+    name: certbot
+    state: present
+
+- name: stop services to allow certbot to generate certificates
+  service:
+    name: nginx
+    state: stopped
+
+- include_tasks: create-cert.yml
+  with_items: "{{ nginx_domains }}"
+
+# TODO - nginx fails to start
+- name: start services after certificates have been generated
+  service:
+    name: nginx
+    state: started
+
+# ---[ end of subdomain.redirect setup ]---
+
+# -----[ Secure the server ]-----
+# Use secure and encrypted communication.
+- name: allow sshd to listen on a custom tcp port
+  seport:
+    ports: "{{ ssh_port }}"
+    proto: tcp
+    setype: ssh_port_t
+    state: present
+  when: ansible_selinux.status == 'enabled'
+
+# Disable root login and use `sudo`.
+- name: update SSH configuration to be more secure
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: 'sshd -t -f %s'
+  with_items:
+    - regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication {{ ssh_password_authentication }}"
+    - regexp: "^PermitRootLogin"
+      line: "PermitRootLogin {{ ssh_permit_root_login }}"
+    - regexp: "^Port"
+      line: "Port {{ ssh_port }}"
+  notify: restart ssh
+
+- name: enable ufw
+  ufw:
+    state: enabled
+
+- name: ufw allow list of ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+  with_items: "{{ ufw_allow_ports }}"
+
+- name: ufw deny list of ports
+  ufw:
+    rule: deny
+    port: "{{ item }}"
+  with_items: "{{ ufw_deny_ports }}"
+
+- name: ufw allow list of names
+  ufw:
+    rule: allow
+    name: "{{ item }}"
+  with_items: "{{ ufw_allow_names }}"
+
+- name: ufw deny list of names
+  ufw:
+    rule: deny
+    name: "{{ item }}"
+  with_items: "{{ ufw_deny_names }}"
+
+# TODO - apply iptable rules to prevent communication between openvpn clients
+# - name: install iptables
+
+# Monitor logins and block suspect IP addresses.
+- name: install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+
+- name: ensure fail2ban is running and enabled on boot
+  service:
+    name: fail2ban
+    state: started
+    enabled: true
+
+# Automating updates
+- name: install unattended upgrades package
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: install probing tools
+  apt:
+    name:
+      - speedtest-cli
+      - net-tools
+      - iperf
+      - iperf3
+
+# TODO - install Sipp from github source

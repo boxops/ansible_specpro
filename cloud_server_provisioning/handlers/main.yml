@@ -1,0 +1,16 @@
+---
+# - name: restart service
+#   service:
+#     name: influxdb.service
+#     state: restarted
+#   notify: restart memcached
+
+# - name: restart memcached
+#   service:
+#     name: memcached
+#     state: restarted
+
+- name: restart ssh
+  service:
+    name: sshd
+    state: restarted

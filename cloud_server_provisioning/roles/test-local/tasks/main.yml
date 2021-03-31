@@ -1,0 +1,27 @@
+---
+# Issue a certificate for the proxy using certbot
+- name: install certbot
+  apt:
+    name: certbot
+    state: present
+
+- name: check if certificate already exists
+  stat:
+    path: /etc/letsencrypt/live/{{ nginx_domain_name }}/cert.pem
+  register: certbot_cert
+
+- name: stop services to allow certbot to generate a cert
+  service:
+    name: nginx
+    state: stopped
+  when: not certbot_cert.stat.exists
+
+- name: generate new certificate if one doesn't exist
+  command: "certbot --redirect --nginx -d {{ nginx_domain_name }}"
+  when: not certbot_cert.stat.exists
+
+- name: start services after cert has been generated
+  service:
+    name: nginx
+    state: started
+  when: not certbot_cert.stat.exists

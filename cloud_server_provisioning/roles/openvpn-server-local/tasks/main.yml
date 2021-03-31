@@ -1,0 +1,137 @@
+---
+# Source: https://github.com/kyl191/ansible-role-openvpn
+
+# ---[ Generate openvpn client keys ]---
+
+# - name: create revoke.sh
+#   template:
+#     src: revoke.sh.j2
+#     dest: "{{ openvpn_config_directory }}/revoke.sh"
+#     mode: 0750
+
+- name: check if client key exists
+  stat:
+    path: "{{ openvpn_config_directory }}/easy-rsa/pki/private/{{ openvpn_client }}.key"
+  register: client_to_create
+
+- block:
+
+    - name: generate full client key without a password
+      command: bash easyrsa build-client-full "{{ openvpn_client }}" nopass
+      args:
+        chdir: "{{ openvpn_config_directory }}/easy-rsa"
+      when: not openvpn_client_pass_auth
+
+    - name: generate full client key with a password
+      command: bash easyrsa --passout=pass:"{{ openvpn_client_pass }}" build-client-full "{{ openvpn_client }}"
+      args:
+        chdir: "{{ openvpn_config_directory }}/easy-rsa"
+      when: openvpn_client_pass_auth
+
+    - name: create client cert only file
+      file:
+        path: "{{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ openvpn_client }}-crt-only.crt"
+        owner: root
+        group: root
+        mode: 0600
+        state: touch
+
+    - name: copy client cert content to cert only file
+      shell: "awk '/BEGIN/,/END/' {{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ openvpn_client }}.crt > {{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ openvpn_client }}-crt-only.crt"
+
+    - name: register client certs
+      slurp:
+        src: "{{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ openvpn_client }}-crt-only.crt"
+      register: client_certs
+
+    - name: register client keys
+      slurp:
+        src: "{{ openvpn_config_directory }}/easy-rsa/pki/private/{{ openvpn_client }}.key"
+      register: client_keys
+
+    - name: protect client keys
+      file:
+        path: "{{ openvpn_config_directory }}/easy-rsa/pki/private/{{ openvpn_client }}.key"
+        mode: 0400
+
+    - name: register server ca key
+      slurp:
+        src: "{{ openvpn_config_directory }}/easy-rsa/pki/ca.crt"
+      register: ca_cert
+
+    - name: register tls-crypt key
+      slurp:
+        src: "{{ openvpn_config_directory }}/tls-crypt.key"
+      register: tls_crypt
+
+    - name: generate client config
+      template:
+        src: client.ovpn.j2
+        dest: "{{ openvpn_ovpn_directory }}/{{ openvpn_client }}.ovpn"
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: fetch client config to local machine
+      fetch:
+        src: "{{ openvpn_ovpn_directory }}/{{ openvpn_client }}.ovpn"
+        dest: "{{ openvpn_fetch_config_directory }}/{{ inventory_hostname }}/{{ openvpn_client }}.ovpn"
+        flat: true
+
+  when:
+    - not client_to_create.stat.exists
+    - openvpn_client | length > 0
+
+
+# ---[ Revoke openvpn client keys and all of its certs ]---
+# TODO - needs rework
+
+# - name: revoke certificates
+#   command: sh revoke.sh {{ item }}.crt
+#   args:
+#     chdir: "{{ openvpn_config_directory }}"
+#   with_items: '{{ openvpn_revoke_certs }}'
+
+- name: check if revoke client key exists
+  stat:
+    path: "{{ openvpn_config_directory }}/easy-rsa/pki/private/{{ openvpn_revoke_cert }}.key"
+  register: clients_to_delete
+
+- block:
+
+    - name: remove client key
+      file:
+        path: "{{ openvpn_config_directory }}/easy-rsa/pki/private/{{ item }}.key"
+        state: absent
+        force: true
+      with_items: '{{ openvpn_revoke_cert }}'
+
+    - name: remove client crt
+      file:
+        path: "{{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ item }}.crt"
+        state: absent
+        force: true
+      with_items: '{{ openvpn_revoke_cert }}'
+
+    - name: remove client cert only file
+      file:
+        path: "{{ openvpn_config_directory }}/easy-rsa/pki/issued/{{ item }}-crt-only.crt"
+        state: absent
+        force: true
+      with_items: "{{ openvpn_revoke_cert }}"
+
+    - name: remove client config
+      file:
+        path: "{{ openvpn_ovpn_directory }}/{{ item }}.ovpn"
+        state: absent
+        force: true
+      with_items: '{{ openvpn_revoke_cert }}'
+
+    # - name: Check client config .ovpn name
+    #   debug:
+    #     msg: "{{ openvpn_ovpn_directory }}/{{ item }}.ovpn"
+    #   with_items: '{{ openvpn_revoke_cert }}'
+
+  when:
+    - clients_to_delete.stat.exists
+    - openvpn_revoke_cert | length > 0

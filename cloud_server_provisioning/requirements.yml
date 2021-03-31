@@ -1,0 +1,17 @@
+---
+# Install all roles:
+# ansible-galaxy install -r requirements.yml
+
+- src: cloudalchemy.prometheus
+
+- src: cloudalchemy.snmp-exporter
+
+- src: cloudalchemy.node_exporter
+
+- src: cloudalchemy.blackbox-exporter
+
+- src: cloudalchemy.grafana
+
+- src: kyl191.openvpn
+
+- src: geerlingguy.nginx

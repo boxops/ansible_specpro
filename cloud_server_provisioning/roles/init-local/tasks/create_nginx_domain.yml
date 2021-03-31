@@ -1,0 +1,23 @@
+---
+- name: create nginx web file
+  file:
+    path: "/etc/nginx/sites-available/{{ item.0.value }}"
+    owner: root
+    group: root
+    mode: 0750
+    state: touch
+
+- name: create server block for nginx
+  blockinfile:
+    path: "/etc/nginx/sites-available/{{ item.0.value }}"
+    block: "{{ item.1 }}"
+  changed_when: false
+
+- name: create a symbolic link to the sites-enabled folder
+  file:
+    src: "/etc/nginx/sites-available/{{ item.0.value }}"
+    dest: "/etc/nginx/sites-enabled/{{ item.0.value }}"
+    owner: root
+    group: root
+    state: link
+    validate: "nginx -t -c %s"

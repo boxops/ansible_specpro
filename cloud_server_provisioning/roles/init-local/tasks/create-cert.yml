@@ -1,0 +1,11 @@
+---
+# create certbot certs
+- name: check if certificate already exists
+  stat:
+    path: "/etc/letsencrypt/live/{{ item }}/cert.pem"
+  register: certbot_cert
+
+# ensure that the subdomain was created before running these tasks
+- name: generate new certificate if it doesn't exist
+  command: "certbot --redirect --nginx -d {{ item }}"
+  when: not certbot_cert.stat.exists
