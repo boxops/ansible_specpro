@@ -1,0 +1,25 @@
+{{ ansible_managed | comment }}
+
+[Unit]
+Description=Prometheus Node Exporter
+After=network-online.target
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+Restart=always
+RestartSec=30
+ExecReload=/bin/kill -HUP $MAINPID
+EnvironmentFile={{ node_exporter_config_directory }}/node-exporter/prometheus-node-exporter
+ExecStart={{ node_exporter_binary_directroy }}/prometheus-node-exporter \
+    --web.listen-address={{ node_exporter_web_listen_address }} \
+    --web.telemetry-path={{ node_exporter_web_telemetry_path }} $ARGS \
+    --collector.textfile.directory={{ node_exporter_textfile_dir }}
+
+StartLimitInterval=0
+TimeoutStopSec=20
+SendSIGKILL=no
+
+[Install]
+WantedBy=multi-user.target

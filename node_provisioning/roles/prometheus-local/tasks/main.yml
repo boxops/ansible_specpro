@@ -1,0 +1,53 @@
+---
+# Define prometheus tasks here
+
+- name: create /var/lib/prometheus directory
+  file:
+    path: /var/lib/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: 0750
+
+- name: create prometheus service unit
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: prometheus
+    group: prometheus
+    mode: 0750
+
+- name: Add execute permissions to prometheus binaries
+  file:
+    path: "{{ prometheus_binary_dir }}/{{ item }}"
+    mode: a+x
+  with_items:
+    - 'promtool'
+    - 'prometheus'
+
+- name: configure prometheus.yml
+  become: true
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    force: true
+    owner: prometheus
+    group: prometheus
+    mode: 0750
+    validate: "{{ prometheus_binary_dir }}/promtool check config %s"
+
+- name: change ownership of /usr/local/etc/prometheus
+  file:
+    path: /usr/local/etc/prometheus
+    owner: prometheus
+    group: prometheus
+    mode: 0750
+    recurse: true
+
+- name: ensure prometheus service is started and enabled
+  become: true
+  service:
+    daemon_reload: true
+    name: prometheus
+    state: started
+    enabled: true

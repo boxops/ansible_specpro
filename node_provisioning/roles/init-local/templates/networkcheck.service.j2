@@ -1,0 +1,10 @@
+[Unit]
+Description=Network recovery custom python script.
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/networkcheck.py
+
+[Install]
+WantedBy=multi-user.target

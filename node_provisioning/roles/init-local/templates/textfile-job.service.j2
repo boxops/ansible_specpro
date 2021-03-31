@@ -1,0 +1,10 @@
+[Unit]
+Description=textfile collector custom python script.
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/textfileJobsnmp.py
+
+[Install]
+WantedBy=multi-user.target

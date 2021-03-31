@@ -1,0 +1,26 @@
+---
+# Define telegraf config here
+
+- name: "create {{ telegraf_systemd_directory }}/telegraf.service"
+  template:
+    src: telegraf.service.j2
+    dest: "{{ telegraf_systemd_directory }}/telegraf.service"
+    owner: telegraf
+    group: telegraf
+    mode: 0750
+
+- name: "change ownership of {{ telegraf_config_directory }} directory"
+  file:
+    path: "{{ telegraf_config_directory }}"
+    owner: telegraf
+    group: telegraf
+    mode: 0750
+    recurse: true
+
+- name: ensure telegraf service is started and enabled
+  become: true
+  service:
+    daemon_reload: true
+    name: telegraf
+    state: started
+    enabled: true

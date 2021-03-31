@@ -1,0 +1,32 @@
+---
+# Define influxdb vars here
+
+influxdb_var_directory: /var/lib/influxdb
+influxdb_config_directory: /usr/local/etc/influxdb
+influxdb_systemd_directory: /etc/systemd/system
+influxdb_bin_directory: /usr/local/bin
+
+influxdb_install_packages: ~
+influxdb_install_packages_default: influxdb
+
+influxdb_dir: []
+influxdb_dir_user: influxdb
+influxdb_dir_group: influxdb
+influxdb_dir_mode: '0750'
+
+influxdb_databases:
+  - telegraf
+
+influxdb_users:
+  - database: telegraf
+    name: telegrafuser
+    password: C1sco123
+
+influxdb_privileges:
+  - database: telegraf
+    user: telegrafuser
+    grant: ALL
+
+influxdb_config_file: /etc/influxdb/influxdb.conf
+influxdb_config_template: config/base.conf.j2
+influxdb_config: []

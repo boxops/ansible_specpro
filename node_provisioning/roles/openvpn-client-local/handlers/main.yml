@@ -1,0 +1,26 @@
+---
+- name: start openvpn
+  become: true
+  service:
+    daemon_reload: true
+    name: openvpn
+    state: started
+
+- name: restart openvpn
+  become: true
+  service:
+    daemon_reload: true
+    name: openvpn
+    state: restarted
+
+- name: reload openvpn
+  become: true
+  service:
+    name: openvpn
+    state: reloaded
+
+- name: enable openvpn
+  become: true
+  service:
+    name: openvpn
+    enabled: true

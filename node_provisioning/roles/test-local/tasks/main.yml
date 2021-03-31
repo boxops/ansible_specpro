@@ -1,0 +1,36 @@
+# ---[ subdomain.redirect setup ]---
+
+- name: install nginx
+  apt:
+    name: nginx
+    state: present
+
+- name: create nginx web file
+  file:
+    path: "/etc/nginx/sites-available/{{ nginx_domain_name }}"
+    owner: root
+    group: root
+    mode: 0750
+    state: touch
+
+- name: create server block for nginx
+  blockinfile:
+    path: "/etc/nginx/sites-available/{{ nginx_domain_name }}"
+    block: "{{ nginx_domain_server_block }}"
+  changed_when: false
+
+- name: create a symbolic link to the sites-enabled folder
+  file:
+    src: "/etc/nginx/sites-available/{{ nginx_domain_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ nginx_domain_name }}"
+    owner: root
+    group: root
+    state: link
+
+- name: restart nginx
+  become: true
+  service:
+    name: nginx
+    state: restarted
+
+# ---[ end of subdomain.redirect setup ]---

@@ -1,0 +1,12 @@
+---
+# https://github.com/cloudalchemy/ansible-node-exporter
+
+# node_exporter_version: 1.0.1
+# node_exporter_skip_install: true
+# node_exporter_binary_local_dir: ""
+node_exporter_web_listen_address: ":9011"
+node_exporter_web_telemetry_path: "/metrics"
+node_exporter_binary_directroy: /usr/local/bin
+node_exporter_config_directory: "/usr/local/etc/prometheus"
+node_exporter_service_file_directory: "/lib/systemd/system"
+node_exporter_textfile_dir: "/tmp/txtfileexp/"

@@ -1,0 +1,13 @@
+---
+- name: restart blackbox exporter
+  become: true
+  service:
+    daemon_reload: true
+    name: blackbox-exporter
+    state: restarted
+
+- name: reload blackbox exporter
+  become: true
+  service:
+    name: blackbox-exporter
+    state: reloaded

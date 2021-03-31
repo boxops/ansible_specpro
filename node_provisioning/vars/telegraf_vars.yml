@@ -1,0 +1,8 @@
+---
+# Define telegraf vars here
+
+telegraf_systemd_directory: /etc/systemd/system
+telegraf_config_directory: /usr/local/etc/telegraf
+telegraf_bin_directory: /usr/local/bin
+
+telegraf_configs: []

@@ -1,0 +1,24 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Blackbox Exporter
+After=network-online.target
+StartLimitInterval=0
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+Restart=always
+RestartSec=30
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart={{ blackbox_exporter_binary_directory }}/blackbox_exporter \
+  --web.listen-address={{ blackbox_exporter_web_listen_address }} \
+  --config.file={{ blackbox_exporter_config_directory }}/blackbox.yml \
+
+TimeoutStopSec=20
+SendSigKill=no
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

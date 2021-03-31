@@ -1,0 +1,41 @@
+---
+# Define grafana tasks here
+
+- name: Setup grafana environment
+  template:
+    src: grafana-server.env.j2
+    dest: "{{ grafana_config_directory }}/grafana-server.env"
+    owner: grafana
+    group: grafana
+    mode: 0750
+
+- name: Create grafana service file
+  template:
+    src: grafana-server.service.j2
+    dest: "{{ grafana_service_file_directory }}/grafana-server.service"
+    owner: grafana
+    group: grafana
+    mode: 0750
+
+- name: Edit grafana ini file
+  ini_file:
+    path: "{{ grafana_config_directory }}/conf/grafana.ini"
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+  with_items: "{{ grafana_ini }}"
+
+- name: Change ownership of grafana directories
+  file:
+    path: "{{ grafana_config_directory }}"
+    owner: grafana
+    group: grafana
+    mode: 0750
+    recurse: true
+
+- name: Enable and start grafana systemd unit
+  service:
+    daemon_reload: true
+    name: grafana-server
+    enabled: true
+    state: started

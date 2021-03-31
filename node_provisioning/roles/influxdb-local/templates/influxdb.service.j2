@@ -1,0 +1,17 @@
+[Unit]
+Description=InfluxDB is an open-source, distributed, time series database
+Documentation=https://docs.influxdata.com/influxdb/
+After=network-online.target
+
+[Service]
+User=influxdb
+Group=influxdb
+LimitNOFILE=65536
+EnvironmentFile={{ influxdb_config_directory }}/influxdb.env
+ExecStart={{ influxdb_bin_directory }}/influxd -config {{ influxdb_config_directory }}/influxdb.conf $INFLUXD_OPTS
+KillMode=control-group
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=influxd.service

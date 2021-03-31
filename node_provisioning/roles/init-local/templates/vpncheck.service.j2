@@ -1,0 +1,13 @@
+[Unit]
+Description=VPN checking custom python script.
+After=network-online.target
+
+[Service]
+Type=simple
+Type=simple
+Restart=always
+RestartSec=30
+ExecStart=/usr/bin/python3 /usr/local/bin/vpncheck.py
+
+[Install]
+WantedBy=multi-user.target

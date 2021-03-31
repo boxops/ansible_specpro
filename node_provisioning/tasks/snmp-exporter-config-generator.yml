@@ -1,0 +1,70 @@
+---
+# Define snmp-exporter config generator tasks here
+# Run this playbook from the control node
+
+# TODO - needs testing (Couldn't download mibs from vendors)
+
+- name: install snmp-exporter generator package dependencies
+  apt:
+    name:
+      - unzip
+      - build-essential
+      - libsnmp-dev
+      - p7zip-full
+      - golang
+      - make
+      - git
+
+- name: check if snmp_exporter environment exists
+  stat:
+    path: "${GOPATH-$HOME/go}/src/github.com/prometheus/snmp_exporter/generator"
+  register: snmp_exporter_path
+
+# setup go environment
+- block:
+
+    - name: fetch snmp-exporter github repository
+      command: go get github.com/prometheus/snmp_exporter/generator
+
+    - name: go build
+      command: go build
+      args:
+        chdir: ${GOPATH-$HOME/go}/src/github.com/prometheus/snmp_exporter/generator
+
+    - name: make mibs
+      command: make mibs
+
+    - name: export MIBDIRS environment variable
+      command: export MIBDIRS=mibs
+
+    - name: generate mibs
+      command: make mibs
+
+# ensure that go version is at least 1.14.x
+
+  when: not snmp_exporter_path
+
+- name: download required mibs
+  get_url:
+    url: "{{ item.url }}"
+    dest: "/tmp/{{ item.dest }}"
+    mode: 0440
+  with_items: "{{ snmp_exporter_download_mibs }}"
+
+# - name: extract downloaded mibs
+
+# - name: copy generator directory to local directory
+#   copy:
+#     src:
+#     dest: /usr/share/snmp/mibs/
+
+- name: create generator.yml file from template
+  template:
+    src: generator.yml.j2
+    dest: /usr/local/etc/prometheus/snmp_exporter/generator/generator.yml
+    owner: root
+    group: root
+    mode: 0750
+
+- name: generate snmp.yml file
+  command: bash generator generate

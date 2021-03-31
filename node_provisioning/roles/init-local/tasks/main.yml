@@ -1,0 +1,264 @@
+---
+# Initial configuration to run on the node
+
+- name: configure hostname
+  hostname:
+    name: "{{ node_hostname }}"
+
+- name: set timezone
+  command: "timedatectl set-timezone {{ time_zone }}"
+  changed_when: false
+
+# - name: Change root password
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html
+# TODO
+
+- name: add mappings to /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ item.ip }} {{ item.name1 }} {{ item.name2 }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name1 }}"
+  with_items: "{{ hosts_file }}"
+
+# Configure network interfaces
+# Install requisities: ansible-galaxy collection install community.general
+- name: install Network manager dependency for nmcli ansible module
+  apt:
+    state: present
+    name: network-manager
+
+- name: configure static network interfaces with nmcli
+  community.general.nmcli:
+    conn_name: "{{ item.conn_name }}"
+    ifname: "{{ item.ifname }}"
+    type: "{{ item.type }}"
+    state: "{{ item.state }}"
+    autoconnect: "{{ item.autoconnect }}"
+    ip4: "{{ item.ip4 }}"
+    gw4: "{{ item.gw4 }}"
+  with_items: "{{ network_config }}"
+  when:
+    - network_config | length > 0
+    - item.ip4 is defined
+
+- name: configure dynamic network interfaces with nmcli
+  community.general.nmcli:
+    conn_name: "{{ item.conn_name }}"
+    ifname: "{{ item.ifname }}"
+    type: "{{ item.type }}"
+    state: "{{ item.state }}"
+    autoconnect: "{{ item.autoconnect }}"
+  with_items: "{{ network_config }}"
+  when:
+    - network_config | length > 0
+    - item.ip4 is not defined
+
+# - name: Upgrade system
+#   apt:
+#     upgrade: dist
+
+- name: create sudo users
+  user:
+    name: "{{ item }}"
+    shell: /bin/bash
+    group: sudo
+    append: true
+    create_home: true
+    state: present
+  with_items: "{{ sudo_users }}"
+
+- name: create sudoers file for sudo users
+  file:
+    path: "/etc/sudoers.d/{{ item }}"
+    owner: root
+    group: root
+    state: touch
+    mode: '0440'
+  with_items: "{{ sudo_users }}"
+  changed_when: false
+
+- name: add rights for sudo users
+  lineinfile:
+    dest: "/etc/sudoers.d/{{ item }}"
+    regexp: "^{{ item }}"
+    line: "{{ item }} ALL=(ALL) NOPASSWD: ALL"
+    state: present
+    validate: "visudo -cf %s"
+  with_items: "{{ sudo_users }}"
+
+- name: add an environment variable to sudoers shell
+  blockinfile:
+    path: "/home/{{ item }}/.bashrc"
+    block: "{{ bashrc_block }}"
+  with_items: "{{ sudo_users }}"
+  changed_when: false
+
+- name: create system groups
+  group:
+    name: "{{ item }}"
+    system: true
+    state: present
+  with_items: "{{ system_users }}"
+
+- name: create system users
+  user:
+    name: "{{ item }}"
+    group: "{{ item }}"
+    system: true
+    shell: "/usr/sbin/nologin"
+    createhome: false
+  with_items: "{{ system_users }}"
+
+# !!! TODO - Make this task idempotent !!!
+- name: copy packages from local package bundle folder to system
+  synchronize:
+    src: "{{ local_package_bundle_directory }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    # owner: true
+  with_items:
+    - { src: 'etc/', dest: '/usr/local/etc/' }
+    - { src: 'bin/', dest: '/usr/local/bin/' }
+    # - { src: 'system/', dest: '/etc/systemd/system/' }
+    - { src: 'databases/', dest: '/var/lib/' }
+    - { src: 'scripts/', dest: '/usr/local/bin/' }
+    - { src: 'rsyslog.conf', dest: '/etc/rsyslog.conf' }
+    - { src: '50-telegraf.conf', dest: '/etc/rsyslog.d/' }
+
+- name: create textfile service unit
+  template:
+    src: textfile-job.service.j2
+    dest: "{{ systemd_service_directory }}/textfile-job.service"
+    owner: root
+    group: root
+    mode: 0750
+
+- name: create textfile timer unit
+  template:
+    src: textfile-job.timer.j2
+    dest: "{{ systemd_service_directory }}/textfile-job.timer"
+    owner: root
+    group: root
+    mode: 0750
+
+- name: create networkcheck service unit
+  template:
+    src: networkcheck.service.j2
+    dest: "{{ systemd_service_directory }}/networkcheck.service"
+    owner: root
+    group: root
+    mode: 0750
+
+- name: create networkcheck timer unit
+  template:
+    src: networkcheck.timer.j2
+    dest: "{{ systemd_service_directory }}/networkcheck.timer"
+    owner: root
+    group: root
+    mode: 0750
+
+- name: create vpncheck service unit
+  template:
+    src: vpncheck.service.j2
+    dest: "{{ systemd_service_directory }}/vpncheck.service"
+    owner: root
+    group: root
+    mode: 0750
+
+- name: ensure that services and timers are started and enabled
+  become: true
+  service:
+    daemon_reload: true
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  with_items:
+    - textfile-job.service
+    - textfile-job.timer
+    - networkcheck.service
+    - networkcheck.timer
+    - vpncheck.service
+
+- name: add execute permissions to files in /usr/local/bin/
+  file:
+    dest: /usr/local/bin/
+    owner: root
+    group: root
+    mode: a+x
+    recurse: true
+
+# ---[ subdomain.redirect setup ]---
+
+- name: install nginx
+  apt:
+    name: nginx
+    state: present
+
+- name: create nginx web file
+  file:
+    path: "/etc/nginx/sites-available/{{ nginx_domain_name }}"
+    owner: root
+    group: root
+    mode: 0750
+    state: touch
+
+- name: create server block for nginx
+  blockinfile:
+    path: "/etc/nginx/sites-available/{{ nginx_domain_name }}"
+    block: "{{ nginx_domain_server_block }}"
+  changed_when: false
+
+- name: create a symbolic link to the sites-enabled folder
+  file:
+    src: "/etc/nginx/sites-available/{{ nginx_domain_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ nginx_domain_name }}"
+    owner: root
+    group: root
+    state: link
+
+- name: restart nginx
+  become: true
+  service:
+    name: nginx
+    state: restarted
+
+# ---[ end of subdomain.redirect setup ]---
+
+# Use secure and encrypted communication.
+- name: allow sshd to listen on a custom tcp port
+  seport:
+    ports: "{{ ssh_port }}"
+    proto: tcp
+    setype: ssh_port_t
+    state: present
+  when: ansible_selinux.status == 'enabled'
+
+# Disable root login and use `sudo`.
+- name: update SSH configuration to be more secure
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: 'sshd -t -f %s'
+  with_items:
+    - regexp: "^PasswordAuthentication"
+      line: "PasswordAuthentication {{ ssh_password_authentication }}"
+    - regexp: "^PermitRootLogin"
+      line: "PermitRootLogin {{ ssh_permit_root_login }}"
+    - regexp: "^Port"
+      line: "Port {{ ssh_port }}"
+  notify: restart ssh
+
+# Monitor logins and block suspect IP addresses.
+- name: install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Ensure fail2ban is running and enabled on boot.
+  service:
+    name: fail2ban
+    state: started
+    enabled: true

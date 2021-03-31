@@ -1,0 +1,44 @@
+---
+# Define influxdb tasks here
+
+- name: "create {{ influxdb_var_directory }}/data directory"
+  file:
+    path: "{{ influxdb_var_directory }}/data"
+    state: directory
+    owner: influxdb
+    group: influxdb
+    mode: 0750
+
+- name: "create {{ influxdb_config_directory }}/influxdb.env"
+  file:
+    path: "{{ influxdb_config_directory }}/influxdb.env"
+    owner: influxdb
+    group: influxdb
+    mode: 0750
+
+- name: "create {{ influxdb_systemd_directory }}/influxdb.service"
+  template:
+    src: influxdb.service.j2
+    dest: "{{ influxdb_systemd_directory }}/influxdb.service"
+    owner: influxdb
+    group: influxdb
+    mode: 0750
+
+- name: change influxdb ownerships
+  file:
+    path: "{{ item }}"
+    owner: influxdb
+    group: influxdb
+    mode: 0750
+    recurse: true
+  with_items:
+    - "{{ influxdb_config_directory }}"
+    - "{{ influxdb_var_directory }}"
+
+- name: ensure influxdb service is started and enabled
+  become: true
+  service:
+    daemon_reload: true
+    name: influxdb
+    state: started
+    enabled: true

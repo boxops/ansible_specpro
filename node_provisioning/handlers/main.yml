@@ -1,0 +1,27 @@
+---
+# Define all handlers here
+
+- name: restart ssh
+  become: true
+  service:
+    name: sshd
+    state: restarted
+
+- name: restart openvpn
+  become: true
+  service:
+    name: openvpn
+    state: restarted
+
+- name: reload prometheus
+  become: true
+  service:
+    name: prometheus
+    state: reloaded
+
+- name: restart prometheus
+  become: true
+  service:
+    daemon_reload: true
+    name: prometheus
+    state: restarted

@@ -1,0 +1,35 @@
+---
+# Define prometheus node-exporter tasks here
+
+- name: create textfile collector dir
+  file:
+    path: "{{ node_exporter_textfile_dir }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    recurse: true
+    mode: 0750
+  when: node_exporter_textfile_dir | length > 0
+
+- name: create prometheus-node-exporter service file
+  template:
+    src: prometheus-node-exporter.service.j2
+    dest: "{{ node_exporter_service_file_directory }}/prometheus-node-exporter.service"
+    owner: prometheus
+    group: prometheus
+    mode: 0750
+
+- name: set node-exporter web listen-address
+  lineinfile:
+    path: "{{ node_exporter_config_directory }}/node-exporter/prometheus-node-exporter"
+    regexp: '^  --web.listen-address="{{ node_exporter_web_listen_address }}"'
+    insertafter: '^ARGS='
+    line: '  --web.listen-address="{{ node_exporter_web_listen_address }}"'
+
+- name: ensure prometheus node-exporter is started and enabled on boot
+  become: true
+  service:
+    daemon_reload: true
+    name: prometheus-node-exporter
+    enabled: true
+    state: started
