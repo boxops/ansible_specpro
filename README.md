@@ -6,7 +6,7 @@ This is a configuration management program created for a portable network monito
 Notes
 -----
 
-Ensure to customise variables in ```vars/``` before usage.
+Ensure to customise variables in ```vars/all.yml``` before usage.
 
 Usage
 -----
