@@ -1,4 +1,3 @@
 ---
-# Install all roles:
-# ansible-galaxy install -r requirements.yml
-
+# Install community roles:
+# ansible-galaxy collection install community.general

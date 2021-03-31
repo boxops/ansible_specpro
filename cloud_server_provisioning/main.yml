@@ -14,21 +14,12 @@
   vars_files:
     - vars/all.yml
 
-    # - vars/init_local_vars.yml
-    # - vars/prometheus_vars.yml
-    # - vars/snmp_exporter_vars.yml
-    # - vars/node_exporter_vars.yml
-    # - vars/blackbox_exporter_vars.yml
-    # - vars/grafana_vars.yml
-    # - vars/openvpn_vars.yml
-    # - vars/nginx_vars.yml
-
   handlers:
 
   roles:
     - roles/init-local
-    - roles/openvpn-server-local
     - roles/grafana-server-local
+    # - roles/openvpn-server-local
 
   tasks:
 

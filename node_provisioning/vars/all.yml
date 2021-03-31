@@ -36,7 +36,7 @@ network_config:
 sudo_users:
   - maciej
   - balazs
-  - specadmin
+  - spec
 
 system_users:
   - prometheus
@@ -62,6 +62,7 @@ bashrc_block: |
   export HISTSIZE PROMPT_COMMAND
   shopt -s histappend
 
+# !!! TODO - Change the subdomain to home.fypbcu.co.uk
 # ---[ subdomain.redirect setup vars ]---
 nginx_domain_name: darley.fypbcu.co.uk
 nginx_web_listen_port: 80
@@ -108,8 +109,9 @@ openvpn_ignore_unknown_option: block-outside-dns
 
 # Generate a new ovpn file for the client
 openvpn_client: "{{ node_hostname }}"
-openvpn_client_pass_auth: true #
-openvpn_client_pass: vpnpass #
+openvpn_client_pass_auth: true
+# pass is only used when openvpn_client_pass_auth is true
+openvpn_client_pass: vpnpass
 
 # Revoke ovpn file and all cert for the client
 # Ensure to assign an empty list if there are no clients to revoke

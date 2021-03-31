@@ -58,10 +58,10 @@
     line: 'AUTOSTART="all"'
 
 # TODO - openvpn service prompts for vpn client password when first started
-# - name: ensure openvpn service is started and enabled
-#   become: true
-#   service:
-#     daemon_reload: true
-#     name: openvpn
-#     state: started
-#     enabled: true
+- name: ensure openvpn service is started and enabled
+  become: true
+  service:
+    daemon_reload: true
+    name: openvpn@client
+    state: started
+    enabled: true
