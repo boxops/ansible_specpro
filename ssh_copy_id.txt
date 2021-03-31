@@ -1,0 +1,7 @@
+# https://www.ssh.com/ssh/copy-id
+
+# generate new ssh key
+ssh-keygen
+
+# copy key to remote host
+ssh-copy-id -i ~/.ssh/mykey user@host
