@@ -9,7 +9,13 @@ This is a configuration management program created for a portable network monito
 Ensure to customise variables in ```vars/``` before usage.
 
 ### Usage
+#### Provision Cloud Server
 ```bash
-cd ansible_specpro
+cd ansible_specpro/cloud_server_provisioning
+ansible-playbook main.yml
+```
+#### Or Provision Node
+```bash
+cd ansible_specpro/node_provisioning
 ansible-playbook main.yml
 ```
