@@ -1,8 +1,0 @@
----
-
-- name: restart ssh
-  become: true
-  systemd:
-    daemon_reload: true
-    name: ssh
-    state: restarted
