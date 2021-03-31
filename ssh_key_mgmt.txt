@@ -1,0 +1,10 @@
+# https://www.ssh.com/ssh/copy-id
+
+# generate new ssh key
+ssh-keygen -t rsa -N ''
+
+# copy generated key to remote host
+ssh-copy-id -i ~/.ssh/mykey user@host
+
+# remove ssh key from known_hosts if not needed
+ssh-keygen -f "/home/$USER/.ssh/known_hosts" -R "ip"
