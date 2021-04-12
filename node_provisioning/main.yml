@@ -17,8 +17,6 @@
         update_cache: true
         cache_valid_time: 3600
       register: apt_action
-      retries: 10
-      until: apt_action is success or ('Could not get lock /var/lib/dpkg/lock-frontend.' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
       # when: network_connectivity
 
     # - tasks/ssh-key-exchange.yml
@@ -27,11 +25,6 @@
 
   vars_files:
     - vars/all.yml
-
-    # - vars/certbot_vars.yml
-
-  handlers:
-    # - include: handlers/main.yml
 
   # ansible-galaxy install <galaxy-user.role-name>
   roles:
@@ -44,21 +37,7 @@
     - roles/grafana-local
     - roles/influxdb-local
     - roles/telegraf-local
-
     # - roles/test-local
-
-  tasks:
-
-    # Use Kickstart to setup a Linux client:
-    # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/6/html/identity_management_guide/kickstart
-    # https://help.ubuntu.com/lts/installation-guide/powerpc/ch04s05.html
-    # https://help.ubuntu.com/community/KickstartCompatibility
-
-    # Create users based on GitHub accounts and add all the pubkeys associated with the GitHub account
-    # https://galaxy.ansible.com/geerlingguy/github-users
-
-    # Install and configure certbot
-    # ansible-galaxy install geerlingguy.certbot
 
   post_tasks:
     # - name: enable and start services
