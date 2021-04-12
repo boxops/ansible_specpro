@@ -26,5 +26,8 @@ jobs:
       - uses: actions/checkout@v2
 
       # Run ansible-lint on the codebase
-      - name: ansible-lint
-        uses: ansible/ansible-lint-action@v4.1.0.post0
+      # - name: ansible-lint
+      #   uses: ansible/ansible-lint-action@v4.1.0.post0
+      
+      - name: Lint Action
+        uses: wearerequired/lint-action@v1.9.0
