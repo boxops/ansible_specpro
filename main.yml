@@ -4,9 +4,9 @@
 - hosts: server
   become: true
   vars_files:
-    - vars/all.yml
+    - vars/all_node.yml
   roles:
-    - roles/openvpn-server-local
+    - roles/openvpn_server_node
 
 - hosts: node
   become: true
@@ -26,18 +26,17 @@
   vars_files:
     - vars/all.yml
 
-  # ansible-galaxy install <galaxy-user.role-name>
   roles:
-    - roles/init-local
-    - roles/openvpn-client-local
-    - roles/prometheus-local
-    - roles/snmp-exporter-local
-    - roles/node-exporter-local
-    - roles/blackbox-exporter-local
-    - roles/grafana-local
-    - roles/influxdb-local
-    - roles/telegraf-local
-    # - roles/test-local
+    - roles/init_node
+    - roles/openvpn_client_node
+    - roles/prometheus_node
+    - roles/snmp_exporter_node
+    - roles/node_exporter_node
+    - roles/blackbox_exporter_node
+    - roles/grafana_node
+    - roles/influxdb_node
+    - roles/telegraf_node
+    # - roles/test_node
 
   post_tasks:
     # - name: enable and start services

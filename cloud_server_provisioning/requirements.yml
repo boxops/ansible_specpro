@@ -1,3 +1,0 @@
----
-# Install community roles:
-# ansible-galaxy collection install community.general

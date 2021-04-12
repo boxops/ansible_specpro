@@ -1,0 +1,20 @@
+---
+# Ansible main playbook for cloud hosted servers
+
+- hosts: server
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Update apt cache if needed
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  vars_files:
+    - vars/all_cloud.yml
+
+  roles:
+    - roles/init_cloud
+    - roles/grafana_server_cloud
+    # - roles/openvpn_server_cloud
