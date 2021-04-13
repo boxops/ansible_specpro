@@ -24,7 +24,7 @@
     # - tasks/securing-servers.yml
 
   vars_files:
-    - vars/all.yml
+    - vars/all_node.yml
 
   roles:
     - roles/init_node

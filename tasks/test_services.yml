@@ -1,0 +1,22 @@
+---
+- hosts: node
+  become: true
+  tasks:
+    - name: Collect service facts
+      service_facts:
+
+    - name: Debug service statuses
+      debug:
+        var: ansible_facts.services["{{ item }}"]
+      with_items:
+        - ufw.service
+        - influxdb.service
+        - telegraf.service
+        - prometheus.service
+        - blackbox-exporter.service
+        - prometheus-node-exporter.service
+        - snmp_exporter.service
+        - textfile-job.service
+        - grafana-server.service
+        - openvpn@client.service
+        - nginx.service
