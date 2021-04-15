@@ -24,7 +24,7 @@
   vars_files:
     - vars/all_node.yml
 
-
+  roles:
     - roles/init_node
     - roles/openvpn_client_node
     - roles/prometheus_node
