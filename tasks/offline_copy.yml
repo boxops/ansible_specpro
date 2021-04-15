@@ -1,0 +1,14 @@
+---
+# Perform an rsync on the node from a local package bundle
+- name: copy packages from local package bundle folder to system
+  synchronize:
+    src: "{{ local_package_bundle_directory }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: 'etc/', dest: '/usr/local/etc/' }
+    - { src: 'bin/', dest: '/usr/local/bin/' }
+    # - { src: 'system/', dest: '/etc/systemd/system/' }
+    - { src: 'databases/', dest: '/var/lib/' }
+    - { src: 'scripts/', dest: '/usr/local/bin/' }
+    - { src: 'rsyslog.conf', dest: '/etc/rsyslog.conf' }
+    - { src: '50-telegraf.conf', dest: '/etc/rsyslog.d/' }

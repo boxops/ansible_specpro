@@ -9,15 +9,11 @@
   command: "timedatectl set-timezone {{ time_zone }}"
   changed_when: false
 
-# - name: Change root password
-# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html
-# TODO
-
 - name: add mappings to /etc/hosts
   blockinfile:
     path: /etc/hosts
     block: |
-      {{ item.ip }} {{ item.name1 }} {{ item.name2 }}
+      {{ item.ip }} {{ item.name1 | indent }} {{ item.name2 | indent }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name1 }}"
   with_items: "{{ hosts_file }}"
 
@@ -110,21 +106,6 @@
     createhome: false
   with_items: "{{ system_users }}"
 
-# !!! TODO - Make this task idempotent !!!
-- name: copy packages from local package bundle folder to system
-  synchronize:
-    src: "{{ local_package_bundle_directory }}/{{ item.src }}"
-    dest: "{{ item.dest }}"
-    # owner: true
-  with_items:
-    - { src: 'etc/', dest: '/usr/local/etc/' }
-    - { src: 'bin/', dest: '/usr/local/bin/' }
-    # - { src: 'system/', dest: '/etc/systemd/system/' }
-    - { src: 'databases/', dest: '/var/lib/' }
-    - { src: 'scripts/', dest: '/usr/local/bin/' }
-    - { src: 'rsyslog.conf', dest: '/etc/rsyslog.conf' }
-    - { src: '50-telegraf.conf', dest: '/etc/rsyslog.d/' }
-
 - name: create textfile service unit
   template:
     src: textfile-job.service.j2
@@ -164,20 +145,6 @@
     owner: root
     group: root
     mode: 0750
-
-- name: ensure that services and timers are started and enabled
-  become: true
-  service:
-    daemon_reload: true
-    name: "{{ item }}"
-    state: started
-    enabled: true
-  with_items:
-    - textfile-job.service
-    - textfile-job.timer
-    - networkcheck.service
-    - networkcheck.timer
-    - vpncheck.service
 
 - name: add execute permissions to files in /usr/local/bin/
   file:
@@ -256,9 +223,3 @@
     name: fail2ban
     state: present
   when: ansible_os_family == 'Debian'
-
-- name: Ensure fail2ban is running and enabled on boot.
-  service:
-    name: fail2ban
-    state: started
-    enabled: true

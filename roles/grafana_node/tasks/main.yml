@@ -32,10 +32,3 @@
     group: grafana
     mode: 0750
     recurse: true
-
-- name: Enable and start grafana systemd unit
-  service:
-    daemon_reload: true
-    name: grafana-server
-    enabled: true
-    state: started

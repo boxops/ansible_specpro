@@ -1,13 +1,6 @@
 ---
 # Source: https://github.com/kyl191/ansible-role-openvpn
-
 # ---[ Generate openvpn client keys ]---
-
-# - name: create revoke.sh
-#   template:
-#     src: revoke.sh.j2
-#     dest: "{{ openvpn_config_directory }}/revoke.sh"
-#     mode: 0750
 
 # change the verification to .crt in /pki/issued/*.crt
 - name: check if client key exists

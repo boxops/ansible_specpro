@@ -34,11 +34,3 @@
   with_items:
     - "{{ influxdb_config_directory }}"
     - "{{ influxdb_var_directory }}"
-
-- name: ensure influxdb service is started and enabled
-  become: true
-  service:
-    daemon_reload: true
-    name: influxdb
-    state: started
-    enabled: true

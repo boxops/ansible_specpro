@@ -43,11 +43,3 @@
     group: prometheus
     mode: 0750
     recurse: true
-
-- name: ensure prometheus service is started and enabled
-  become: true
-  service:
-    daemon_reload: true
-    name: prometheus
-    state: started
-    enabled: true

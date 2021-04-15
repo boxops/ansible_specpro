@@ -17,11 +17,9 @@
         update_cache: true
         cache_valid_time: 3600
       register: apt_action
-      # when: network_connectivity
 
-    # - tasks/ssh-key-exchange.yml
-    # - tasks/snmp-exporter-config-generator.yml
-    # - tasks/securing-servers.yml
+    - import_tasks: tasks/offline_copy.yml
+    # - tasks/snmp_exporter_config_generator.yml
 
   vars_files:
     - vars/all_node.yml
@@ -39,6 +37,6 @@
     # - roles/test_node
 
   post_tasks:
-    # - name: enable and start services
-    # manually check issues with services:
+    - import_tasks: tasks/start_services.yml
+    # check issues with services in cli:
     # sudo journalctl -r | grep (service-name) | head -n 50

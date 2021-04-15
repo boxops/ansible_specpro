@@ -36,11 +36,3 @@
   notify:
     - reload snmp exporter
   when: snmp_exporter_config_file != ""
-
-- name: ensure prometheus node-exporter service is started and enabled
-  become: true
-  service:
-    daemon_reload: true
-    name: snmp_exporter
-    state: started
-    enabled: true

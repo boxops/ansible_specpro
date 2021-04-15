@@ -16,11 +16,3 @@
     group: telegraf
     mode: 0750
     recurse: true
-
-- name: ensure telegraf service is started and enabled
-  become: true
-  service:
-    daemon_reload: true
-    name: telegraf
-    state: started
-    enabled: true

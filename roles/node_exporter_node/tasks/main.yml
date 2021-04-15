@@ -25,11 +25,3 @@
     regexp: '^  --web.listen-address="{{ node_exporter_web_listen_address }}"'
     insertafter: '^ARGS='
     line: '  --web.listen-address="{{ node_exporter_web_listen_address }}"'
-
-- name: ensure prometheus node-exporter is started and enabled on boot
-  become: true
-  service:
-    daemon_reload: true
-    name: prometheus-node-exporter
-    enabled: true
-    state: started
