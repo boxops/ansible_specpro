@@ -7,7 +7,7 @@ Clone
 -----
 
 ```bash
-git clone https://github.com/deadmanhide/ansible_specpro
+$ git clone https://github.com/deadmanhide/ansible_specpro
 ```
 
 Notes
@@ -19,8 +19,8 @@ Usage
 -----
 
 ```bash
-cd ansible_specpro
-ansible-playbook main.yml
+$ cd ansible_specpro
+$ ansible-playbook main.yml
 ```
 
 License
