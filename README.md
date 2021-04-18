@@ -11,14 +11,8 @@ Ensure to customise variables in ```vars/all.yml``` before usage.
 Usage
 -----
 
-### Provision Cloud Servers
 ```bash
-cd ansible_specpro/cloud_server_provisioning
-ansible-playbook main.yml
-```
-### Or Provision Nodes
-```bash
-cd ansible_specpro/node_provisioning
+cd ansible_specpro
 ansible-playbook main.yml
 ```
 
