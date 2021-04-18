@@ -21,7 +21,7 @@ $ ansible-playbook main.yml
 Notes
 -----
 
-Ensure to customise variables in ```vars/all.yml``` before usage.
+Ensure to customise variables in ```ansible_specpro/vars/all.yml``` before usage.
 
 License
 -------
