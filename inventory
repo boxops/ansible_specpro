@@ -1,12 +1,12 @@
 [server]
-fypbcu.co.uk
+example.com
 
 [server:vars]
-ansible_user=administrator
+ansible_user=admin
 #ansible_ssh_private_key_file=ssh/server_key
 
 [node]
-192.168.1.172
+192.168.1.100
 
 [node:vars]
 ansible_user=ubuntu

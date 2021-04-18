@@ -4,9 +4,9 @@
 - hosts: server
   become: true
   vars_files:
-    - vars/all_node.yml
+    - vars/all.yml
   roles:
-    - roles/openvpn_server_node
+    - roles/openvpn_server
 
 - hosts: node
   become: true
@@ -19,22 +19,21 @@
       register: apt_action
 
     - import_tasks: tasks/offline_copy.yml
-    # - tasks/snmp_exporter_config_generator.yml
 
   vars_files:
-    - vars/all_node.yml
+    - vars/all.yml
 
   roles:
-    - roles/init_node
-    - roles/openvpn_client_node
-    - roles/prometheus_node
-    - roles/snmp_exporter_node
-    - roles/node_exporter_node
-    - roles/blackbox_exporter_node
-    - roles/grafana_node
-    - roles/influxdb_node
-    - roles/telegraf_node
-    # - roles/test_node
+    - roles/init
+    - roles/openvpn_client
+    - roles/prometheus
+    - roles/snmp_exporter
+    - roles/node_exporter
+    - roles/blackbox_exporter
+    - roles/grafana
+    - roles/influxdb
+    - roles/telegraf
+    # - roles/test
 
   post_tasks:
     - import_tasks: tasks/start_services.yml

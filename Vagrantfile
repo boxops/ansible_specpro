@@ -18,8 +18,6 @@ Vagrant.configure("2") do |config|
     ansible.become = true
     ansible.galaxy_roles_path = "/etc/ansible/roles"
     ansible.galaxy_command = "sudo ansible-galaxy collection install community.general --roles-path=%{roles_path} --force"
-
-    # ansible.playbook = "cloud_server_provisioning/main.yml"
-    ansible.playbook = "node_provisioning/main.yml"
+    ansible.playbook = "ansible_specpro/main.yml"
   end
 end

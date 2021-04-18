@@ -2,7 +2,7 @@
 
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
@@ -28,6 +28,6 @@ jobs:
       # Run ansible-lint on the codebase
       # - name: ansible-lint
       #   uses: ansible/ansible-lint-action@v4.1.0.post0
-      
+
       - name: Lint Action
         uses: wearerequired/lint-action@v1.9.0

@@ -2,8 +2,6 @@
 # Define snmp-exporter config generator tasks here
 # Run this playbook from the control node
 
-# TODO - needs testing (Couldn't download mibs from vendors)
-
 - name: install snmp-exporter generator package dependencies
   apt:
     name:
