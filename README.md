@@ -10,11 +10,6 @@ Clone
 $ git clone https://github.com/deadmanhide/ansible_specpro
 ```
 
-Notes
------
-
-Ensure to customise variables in ```vars/all.yml``` before usage.
-
 Usage
 -----
 
@@ -22,6 +17,11 @@ Usage
 $ cd ansible_specpro
 $ ansible-playbook main.yml
 ```
+
+Notes
+-----
+
+Ensure to customise variables in ```vars/all.yml``` before usage.
 
 License
 -------
