@@ -7,7 +7,7 @@ Clone
 -----
 
 ```bash
-$ git clone https://github.com/deadmanhide/ansible_specpro
+$ git clone https://github.com/boxops/ansible_specpro
 ```
 
 Usage
